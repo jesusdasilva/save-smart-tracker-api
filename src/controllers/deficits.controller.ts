@@ -1,30 +1,30 @@
 import { Request, Response } from 'express';
-import { AvoidedExpensesService } from '../services/avoidedExpenses.service';
-import { NewAvoidedExpense } from '../types/avoidedExpenses.schema';
+import { DeficitsService } from '../services/deficits.service';
+import { NewDeficit } from '../types/deficits.schema';
 
-export class AvoidedExpensesController {
-  private avoidedExpensesService: AvoidedExpensesService;
+export class DeficitsController {
+  private deficitsService: DeficitsService;
 
   constructor() {
-    this.avoidedExpensesService = new AvoidedExpensesService();
+    this.deficitsService = new DeficitsService();
   }
 
-  // POST /api/avoided-expenses
+  // POST /api/deficits
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const expenseData: NewAvoidedExpense = req.body;
+      const deficitData: NewDeficit = req.body;
       
       // Validaciones básicas
-      if (!expenseData.user_id || !expenseData.name || !expenseData.amount || !expenseData.expense_date) {
+      if (!deficitData.user_id || !deficitData.name || !deficitData.amount || !deficitData.start_date || !deficitData.end_date) {
         res.status(400).json({ 
           success: false, 
-          message: 'user_id, name, amount y expense_date son requeridos' 
+          message: 'user_id, name, amount, start_date y end_date son requeridos' 
         });
         return;
       }
 
       // Validar que el monto sea positivo
-      if (Number(expenseData.amount) <= 0) {
+      if (Number(deficitData.amount) <= 0) {
         res.status(400).json({ 
           success: false, 
           message: 'El monto debe ser mayor a 0' 
@@ -32,15 +32,26 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const newExpense = await this.avoidedExpensesService.create(expenseData);
+      // Validar que start_date <= end_date
+      const startDate = new Date(deficitData.start_date);
+      const endDate = new Date(deficitData.end_date);
+      if (startDate > endDate) {
+        res.status(400).json({ 
+          success: false, 
+          message: 'La fecha de inicio debe ser menor o igual a la fecha de fin' 
+        });
+        return;
+      }
+
+      const newDeficit = await this.deficitsService.create(deficitData);
       
       res.status(201).json({
         success: true,
-        data: newExpense,
-        message: 'Gasto evitado creado exitosamente'
+        data: newDeficit,
+        message: 'Déficit creado exitosamente'
       });
     } catch (error) {
-      console.error('Error al crear gasto evitado:', error);
+      console.error('Error al crear déficit:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -48,7 +59,7 @@ export class AvoidedExpensesController {
     }
   }
 
-  // GET /api/avoided-expenses
+  // GET /api/deficits
   async findAll(req: Request, res: Response): Promise<void> {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -57,18 +68,16 @@ export class AvoidedExpensesController {
       // Filtros opcionales
       const filters = {
         userId: req.query.userId ? parseInt(req.query.userId as string) : undefined,
-        categoryId: req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined,
-        typeId: req.query.typeId ? parseInt(req.query.typeId as string) : undefined,
         startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
         endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
         search: req.query.search as string
       };
 
-      const result = await this.avoidedExpensesService.findAll(page, limit, filters);
+      const result = await this.deficitsService.findAll(page, limit, filters);
       
       res.status(200).json({
         success: true,
-        data: result.expenses,
+        data: result.deficits,
         pagination: {
           page,
           limit,
@@ -77,7 +86,7 @@ export class AvoidedExpensesController {
         }
       });
     } catch (error) {
-      console.error('Error al obtener gastos evitados:', error);
+      console.error('Error al obtener déficits:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -85,7 +94,7 @@ export class AvoidedExpensesController {
     }
   }
 
-  // GET /api/avoided-expenses/:id
+  // GET /api/deficits/:id
   async findById(req: Request, res: Response): Promise<void> {
     try {
       const id = parseInt(req.params.id);
@@ -98,22 +107,22 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const expense = await this.avoidedExpensesService.findById(id);
+      const deficit = await this.deficitsService.findById(id);
       
-      if (!expense) {
+      if (!deficit) {
         res.status(404).json({
           success: false,
-          message: 'Gasto evitado no encontrado'
+          message: 'Déficit no encontrado'
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        data: expense
+        data: deficit
       });
     } catch (error) {
-      console.error('Error al obtener gasto evitado:', error);
+      console.error('Error al obtener déficit:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -121,43 +130,7 @@ export class AvoidedExpensesController {
     }
   }
 
-  // GET /api/avoided-expenses/:id/with-relations
-  async findWithRelations(req: Request, res: Response): Promise<void> {
-    try {
-      const id = parseInt(req.params.id);
-      
-      if (isNaN(id)) {
-        res.status(400).json({
-          success: false,
-          message: 'ID inválido'
-        });
-        return;
-      }
-
-      const expense = await this.avoidedExpensesService.findWithRelations(id);
-      
-      if (!expense) {
-        res.status(404).json({
-          success: false,
-          message: 'Gasto evitado no encontrado'
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        data: expense
-      });
-    } catch (error) {
-      console.error('Error al obtener gasto evitado con relaciones:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor'
-      });
-    }
-  }
-
-  // GET /api/avoided-expenses/user/:userId
+  // GET /api/deficits/user/:userId
   async findByUserId(req: Request, res: Response): Promise<void> {
     try {
       const userId = parseInt(req.params.userId);
@@ -172,11 +145,11 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const result = await this.avoidedExpensesService.findByUserId(userId, page, limit);
+      const result = await this.deficitsService.findByUserId(userId, page, limit);
       
       res.status(200).json({
         success: true,
-        data: result.expenses,
+        data: result.deficits,
         pagination: {
           page,
           limit,
@@ -185,7 +158,7 @@ export class AvoidedExpensesController {
         }
       });
     } catch (error) {
-      console.error('Error al obtener gastos evitados por usuario:', error);
+      console.error('Error al obtener déficits por usuario:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -193,7 +166,36 @@ export class AvoidedExpensesController {
     }
   }
 
-  // PUT /api/avoided-expenses/:id
+  // GET /api/deficits/user/:userId/active
+  async findActiveByUserId(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = parseInt(req.params.userId);
+      const date = req.query.date ? new Date(req.query.date as string) : new Date();
+      
+      if (isNaN(userId)) {
+        res.status(400).json({
+          success: false,
+          message: 'ID de usuario inválido'
+        });
+        return;
+      }
+
+      const deficits = await this.deficitsService.findActiveByUserId(userId, date);
+      
+      res.status(200).json({
+        success: true,
+        data: deficits
+      });
+    } catch (error) {
+      console.error('Error al obtener déficits activos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor'
+      });
+    }
+  }
+
+  // PUT /api/deficits/:id
   async update(req: Request, res: Response): Promise<void> {
     try {
       const id = parseInt(req.params.id);
@@ -207,12 +209,12 @@ export class AvoidedExpensesController {
         return;
       }
 
-      // Verificar si el gasto evitado existe
-      const existingExpense = await this.avoidedExpensesService.findById(id);
-      if (!existingExpense) {
+      // Verificar si el déficit existe
+      const existingDeficit = await this.deficitsService.findById(id);
+      if (!existingDeficit) {
         res.status(404).json({
           success: false,
-          message: 'Gasto evitado no encontrado'
+          message: 'Déficit no encontrado'
         });
         return;
       }
@@ -226,15 +228,28 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const updatedExpense = await this.avoidedExpensesService.update(id, updateData);
+      // Validar fechas si se están actualizando
+      if (updateData.start_date && updateData.end_date) {
+        const startDate = new Date(updateData.start_date);
+        const endDate = new Date(updateData.end_date);
+        if (startDate > endDate) {
+          res.status(400).json({
+            success: false,
+            message: 'La fecha de inicio debe ser menor o igual a la fecha de fin'
+          });
+          return;
+        }
+      }
+
+      const updatedDeficit = await this.deficitsService.update(id, updateData);
       
       res.status(200).json({
         success: true,
-        data: updatedExpense,
-        message: 'Gasto evitado actualizado exitosamente'
+        data: updatedDeficit,
+        message: 'Déficit actualizado exitosamente'
       });
     } catch (error) {
-      console.error('Error al actualizar gasto evitado:', error);
+      console.error('Error al actualizar déficit:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -242,7 +257,7 @@ export class AvoidedExpensesController {
     }
   }
 
-  // DELETE /api/avoided-expenses/:id
+  // DELETE /api/deficits/:id
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const id = parseInt(req.params.id);
@@ -255,22 +270,22 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const success = await this.avoidedExpensesService.delete(id);
+      const success = await this.deficitsService.delete(id);
       
       if (!success) {
         res.status(404).json({
           success: false,
-          message: 'Gasto evitado no encontrado'
+          message: 'Déficit no encontrado'
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        message: 'Gasto evitado eliminado exitosamente'
+        message: 'Déficit eliminado exitosamente'
       });
     } catch (error) {
-      console.error('Error al eliminar gasto evitado:', error);
+      console.error('Error al eliminar déficit:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -278,7 +293,7 @@ export class AvoidedExpensesController {
     }
   }
 
-  // GET /api/avoided-expenses/user/:userId/stats
+  // GET /api/deficits/user/:userId/stats
   async getUserStats(req: Request, res: Response): Promise<void> {
     try {
       const userId = parseInt(req.params.userId);
@@ -291,7 +306,7 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const stats = await this.avoidedExpensesService.getUserStats(userId);
+      const stats = await this.deficitsService.getUserStats(userId);
       
       res.status(200).json({
         success: true,
@@ -306,12 +321,12 @@ export class AvoidedExpensesController {
     }
   }
 
-  // GET /api/avoided-expenses/user/:userId/monthly-savings
-  async getMonthlySavings(req: Request, res: Response): Promise<void> {
+  // GET /api/deficits/user/:userId/by-date-range
+  async findByDateRange(req: Request, res: Response): Promise<void> {
     try {
       const userId = parseInt(req.params.userId);
-      const year = parseInt(req.query.year as string) || new Date().getFullYear();
-      const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+      const startDate = new Date(req.query.startDate as string);
+      const endDate = new Date(req.query.endDate as string);
       
       if (isNaN(userId)) {
         res.status(400).json({
@@ -321,74 +336,34 @@ export class AvoidedExpensesController {
         return;
       }
 
-      const savings = await this.avoidedExpensesService.getMonthlySavings(userId, year, month);
-      
-      res.status(200).json({
-        success: true,
-        data: savings
-      });
-    } catch (error) {
-      console.error('Error al obtener ahorros mensuales:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor'
-      });
-    }
-  }
-
-  // GET /api/avoided-expenses/user/:userId/savings-by-category
-  async getSavingsByCategory(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = parseInt(req.params.userId);
-      
-      if (isNaN(userId)) {
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         res.status(400).json({
           success: false,
-          message: 'ID de usuario inválido'
+          message: 'Fechas inválidas'
         });
         return;
       }
 
-      const savings = await this.avoidedExpensesService.getSavingsByCategory(userId);
-      
-      res.status(200).json({
-        success: true,
-        data: savings
-      });
-    } catch (error) {
-      console.error('Error al obtener ahorros por categoría:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor'
-      });
-    }
-  }
-
-  // GET /api/avoided-expenses/user/:userId/savings-by-type
-  async getSavingsByType(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = parseInt(req.params.userId);
-      
-      if (isNaN(userId)) {
+      if (startDate > endDate) {
         res.status(400).json({
           success: false,
-          message: 'ID de usuario inválido'
+          message: 'La fecha de inicio debe ser menor o igual a la fecha de fin'
         });
         return;
       }
 
-      const savings = await this.avoidedExpensesService.getSavingsByType(userId);
+      const deficits = await this.deficitsService.findByDateRange(userId, startDate, endDate);
       
       res.status(200).json({
         success: true,
-        data: savings
+        data: deficits
       });
     } catch (error) {
-      console.error('Error al obtener ahorros por tipo:', error);
+      console.error('Error al obtener déficits por rango de fechas:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
       });
     }
   }
-}
+} 
