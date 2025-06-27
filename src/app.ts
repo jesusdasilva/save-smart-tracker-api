@@ -4,6 +4,7 @@ import passport from './config/passport';
 import routes from './routes';
 import authRoutes from './routes/auth.routes';
 import cors from 'cors';
+import { setupSwagger } from './swagger';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,7 @@ app.use(cors({
   origin: '*'
 }));
 app.use(express.json());
+setupSwagger(app);
 app.use('/api', routes);
 
 app.use(session({

@@ -1,0 +1,601 @@
+openapi: 3.0.0
+info:
+  title: SaveSmartTracker API
+  description: API for managing personal finances, including expenses, savings, and goals.
+  version: 1.0.0
+servers:
+  - url: /api
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Invalid input
+  /auth/login:
+    post:
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: User logged in successfully
+        '401':
+          description: Unauthorized
+  /auth/check-email/{email}:
+    get:
+      summary: Check if an email is available
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email availability status
+  /auth/check-username/{username}:
+    get:
+      summary: Check if a username is available
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Username availability status
+  /auth/google:
+    get:
+      summary: Authenticate with Google
+      responses:
+        '302':
+          description: Redirect to Google for authentication
+  /auth/google/callback:
+    get:
+      summary: Google authentication callback
+      responses:
+        '200':
+          description: User authenticated successfully
+  /auth/profile:
+    get:
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile data
+  /auth/logout:
+    post:
+      summary: Logout a user
+      responses:
+        '200':
+          description: User logged out successfully
+  /users:
+    get:
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of users
+    post:
+      summary: Create a new user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+  /users/{id}:
+    get:
+      summary: Get a user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User data
+    put:
+      summary: Update a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated successfully
+    delete:
+      summary: Delete a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted successfully
+  /categories:
+    get:
+      summary: Get all categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of categories
+    post:
+      summary: Create a new category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '201':
+          description: Category created successfully
+  /categories/{id}:
+    get:
+      summary: Get a category by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category data
+    put:
+      summary: Update a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Category updated successfully
+    delete:
+      summary: Delete a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted successfully
+  /types:
+    get:
+      summary: Get all types
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of types
+    post:
+      summary: Create a new type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Type'
+      responses:
+        '201':
+          description: Type created successfully
+  /types/{id}:
+    get:
+      summary: Get a type by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Type data
+    put:
+      summary: Update a type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Type'
+      responses:
+        '200':
+          description: Type updated successfully
+    delete:
+      summary: Delete a type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Type deleted successfully
+  /avoided-expenses:
+    get:
+      summary: Get all avoided expenses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of avoided expenses
+    post:
+      summary: Create a new avoided expense
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvoidedExpense'
+      responses:
+        '201':
+          description: Avoided expense created successfully
+  /avoided-expenses/{id}:
+    get:
+      summary: Get an avoided expense by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Avoided expense data
+    put:
+      summary: Update an avoided expense
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvoidedExpense'
+      responses:
+        '200':
+          description: Avoided expense updated successfully
+    delete:
+      summary: Delete an avoided expense
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Avoided expense deleted successfully
+  /deficits:
+    get:
+      summary: Get all deficits
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of deficits
+    post:
+      summary: Create a new deficit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Deficit'
+      responses:
+        '201':
+          description: Deficit created successfully
+  /deficits/{id}:
+    get:
+      summary: Get a deficit by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deficit data
+    put:
+      summary: Update a deficit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Deficit'
+      responses:
+        '200':
+          description: Deficit updated successfully
+    delete:
+      summary: Delete a deficit
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deficit deleted successfully
+  /goals:
+    get:
+      summary: Get all goals
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of goals
+    post:
+      summary: Create a new goal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Goal'
+      responses:
+        '201':
+          description: Goal created successfully
+  /goals/{id}:
+    get:
+      summary: Get a goal by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Goal data
+    put:
+      summary: Update a goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Goal'
+      responses:
+        '200':
+          description: Goal updated successfully
+    delete:
+      summary: Delete a goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Goal deleted successfully
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        avatar_url:
+          type: string
+        provider:
+          type: string
+        is_active:
+          type: boolean
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        is_active:
+          type: boolean
+    Type:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        is_active:
+          type: boolean
+    AvoidedExpense:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        type_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+    Deficit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+    Goal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        target_amount:
+          type: number
+        current_amount:
+          type: number
+        due_date:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
